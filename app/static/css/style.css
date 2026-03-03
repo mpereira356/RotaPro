@@ -82,6 +82,20 @@ body {
     font-weight: 700;
 }
 
+.header-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-logo {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    object-fit: cover;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
 .header-center span {
     font-size: 0.74rem;
     color: var(--text-muted);

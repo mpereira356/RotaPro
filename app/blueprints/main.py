@@ -1,11 +1,18 @@
 from pathlib import Path
 
 from flask import Blueprint, current_app, jsonify, render_template, send_from_directory
+from ..auth_utils import login_required
 
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
-def index():
+def home():
+    return render_template('landing.html')
+
+
+@main_bp.route('/app')
+@login_required
+def app_page():
     return render_template('index.html')
 
 
