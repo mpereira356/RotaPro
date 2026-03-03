@@ -24,6 +24,19 @@ def address_suggestions():
     suggestions = RouteService.search_addresses(query, lat=lat_value, lon=lon_value, limit=6)
     return jsonify({"suggestions": suggestions})
 
+@api_bp.route('/geocode', methods=['GET'])
+def geocode_address():
+    query = request.args.get('address', '').strip()
+
+    if len(query) < 3:
+        return jsonify({"error": "Endereco invalido"}), 400
+
+    result = RouteService.geocode(query)
+    if not result:
+        return jsonify({"error": "Endereco nao localizado"}), 404
+
+    return jsonify(result)
+
 @api_bp.route('/optimize', methods=['POST'])
 def optimize():
     data = request.json
@@ -31,7 +44,7 @@ def optimize():
     start_lon = data.get('lon')
     address_list = data.get('addresses', [])
 
-    if not start_lat or not start_lon or not address_list:
+    if start_lat is None or start_lon is None or not address_list:
         return jsonify({"error": "Dados incompletos"}), 400
 
     start_coords = {"lat": float(start_lat), "lon": float(start_lon)}

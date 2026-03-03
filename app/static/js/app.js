@@ -42,6 +42,10 @@ class RouteOptimizer {
         document.getElementById('btnClear').addEventListener('click', () => this.clearAll());
         document.getElementById('btnAddAddress').addEventListener('click', () => this.addAddressFromInput());
         document.getElementById('btnDownloadApk').addEventListener('click', (event) => this.handleApkDownload(event));
+        document.getElementById('currentLocation').addEventListener('input', () => {
+            // Se o usuario editar a origem, invalida coordenadas anteriores para recalcular.
+            this.currentLocation = null;
+        });
 
         const addressInput = document.getElementById('addressInput');
         addressInput.addEventListener('input', () => this.handleAddressInput());
@@ -287,6 +291,90 @@ class RouteOptimizer {
     // ============================================
     // Geolocalizacao
     // ============================================
+    setCurrentLocation(lat, lon, popupTitle = 'Sua localizacao atual') {
+        this.currentLocation = { lat, lon };
+
+        document.getElementById('currentLocation').value = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+        document.getElementById('coordsDisplay').textContent =
+            `Latitude: ${lat.toFixed(6)}, Longitude: ${lon.toFixed(6)}`;
+
+        this.map.setView([lat, lon], 15);
+        this.clearMarkers();
+
+        const currentMarker = L.circleMarker(
+            [lat, lon],
+            {
+                radius: 10,
+                fillColor: '#1f3a5f',
+                color: '#fff',
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 0.9
+            }
+        ).addTo(this.map);
+
+        currentMarker.bindPopup(popupTitle).openPopup();
+        this.markers.push(currentMarker);
+    }
+
+    parseLatLon(value) {
+        const parts = value.split(',').map((part) => part.trim());
+        if (parts.length !== 2) {
+            return null;
+        }
+
+        const lat = Number.parseFloat(parts[0]);
+        const lon = Number.parseFloat(parts[1]);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+            return null;
+        }
+        if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+            return null;
+        }
+
+        return { lat, lon };
+    }
+
+    async resolveCurrentLocation() {
+        if (this.currentLocation) {
+            return true;
+        }
+
+        const currentLocationInput = document.getElementById('currentLocation');
+        const typedOrigin = (currentLocationInput.value || '').trim();
+
+        if (!typedOrigin) {
+            this.showAlert('Digite sua origem ou clique em Detectar.', 'warning');
+            return false;
+        }
+
+        const parsedCoords = this.parseLatLon(typedOrigin);
+        if (parsedCoords) {
+            this.setCurrentLocation(parsedCoords.lat, parsedCoords.lon, 'Origem definida manualmente');
+            this.showAlert('Origem manual definida com sucesso!', 'success');
+            return true;
+        }
+
+        try {
+            this.showAlert('Buscando coordenadas da origem digitada...', 'info');
+            const params = new URLSearchParams({ address: typedOrigin });
+            const response = await fetch(`/api/geocode?${params.toString()}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Nao foi possivel localizar a origem informada');
+            }
+
+            this.setCurrentLocation(data.lat, data.lon, 'Origem definida manualmente');
+            this.showAlert('Origem localizada com sucesso!', 'success');
+            return true;
+        } catch (error) {
+            console.error('Erro ao geocodificar origem manual:', error);
+            this.showAlert(`Nao foi possivel localizar a origem: ${error.message}`, 'danger');
+            return false;
+        }
+    }
+
     getCurrentLocation() {
         const btn = document.getElementById('btnGetLocation');
         btn.disabled = true;
@@ -308,33 +396,11 @@ class RouteOptimizer {
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    this.currentLocation = {
-                        lat: position.coords.latitude,
-                        lon: position.coords.longitude
-                    };
-
-                    document.getElementById('currentLocation').value =
-                        `${this.currentLocation.lat.toFixed(4)}, ${this.currentLocation.lon.toFixed(4)}`;
-                    document.getElementById('coordsDisplay').textContent =
-                        `Latitude: ${this.currentLocation.lat.toFixed(6)}, Longitude: ${this.currentLocation.lon.toFixed(6)}`;
-
-                    this.map.setView([this.currentLocation.lat, this.currentLocation.lon], 15);
-
-                    this.clearMarkers();
-                    const currentMarker = L.circleMarker(
-                        [this.currentLocation.lat, this.currentLocation.lon],
-                        {
-                            radius: 10,
-                            fillColor: '#1f3a5f',
-                            color: '#fff',
-                            weight: 3,
-                            opacity: 1,
-                            fillOpacity: 0.9
-                        }
-                    ).addTo(this.map);
-
-                    currentMarker.bindPopup('Sua localizacao atual').openPopup();
-                    this.markers.push(currentMarker);
+                    this.setCurrentLocation(
+                        position.coords.latitude,
+                        position.coords.longitude,
+                        'Sua localizacao atual'
+                    );
 
                     this.showAlert('Localizacao detectada com sucesso!', 'success');
                     resetButton();
@@ -370,8 +436,8 @@ class RouteOptimizer {
     // Calculo de Rota
     // ============================================
     async calculateRoute() {
-        if (!this.currentLocation) {
-            this.showAlert('Detecte sua localizacao primeiro.', 'warning');
+        const hasCurrentLocation = await this.resolveCurrentLocation();
+        if (!hasCurrentLocation) {
             return;
         }
 
@@ -588,7 +654,7 @@ class RouteOptimizer {
         document.getElementById('addressInput').value = '';
         document.getElementById('addressList').value = '';
         document.getElementById('currentLocation').value = '';
-        document.getElementById('coordsDisplay').textContent = 'Clique em "Detectar" para obter suas coordenadas';
+        document.getElementById('coordsDisplay').textContent = 'Digite sua origem manualmente ou clique em "Detectar"';
         document.getElementById('resultsCard').style.display = 'none';
 
         this.currentLocation = null;
