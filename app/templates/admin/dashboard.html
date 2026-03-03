@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin | RouteOptimizer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background:#0f172a; color:#e6eeff; font-family:Poppins,Inter,sans-serif; }
+        .navx { background:rgba(15,23,42,.9); border-bottom:1px solid rgba(148,163,184,.2); }
+        .panel { background:linear-gradient(160deg,#182646 0%,#101c34 100%); border:1px solid rgba(148,163,184,.22); border-radius:16px; }
+        .logo { width:34px; height:34px; border-radius:8px; object-fit:cover; border:1px solid rgba(148,163,184,.35); }
+        .metric { padding:14px; }
+        .metric .label { font-size:.8rem; color:#9eb1d6; }
+        .metric .value { font-size:1.35rem; font-weight:700; }
+        .table { color:#dbe8ff; }
+        .table thead th { color:#9eb1d6; font-weight:600; border-color:rgba(148,163,184,.25); }
+        .table td { border-color:rgba(148,163,184,.14); vertical-align:middle; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navx">
+        <div class="container-fluid px-3 px-md-4 d-flex justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <img class="logo" src="{{ url_for('static', filename='img/logo.png') }}" alt="RouteOptimizer">
+                <div>
+                    <strong>RouteOptimizer Admin</strong>
+                    <div class="small text-secondary">Gestao completa da plataforma</div>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-light btn-sm" href="{{ url_for('main.app_page') }}">Abrir app</a>
+                <form method="post" action="{{ url_for('auth.logout') }}">
+                    <button class="btn btn-outline-light btn-sm" type="submit">Sair</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container-fluid py-3 px-3 px-md-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row g-3 mb-3">
+            <div class="col-6 col-lg-2"><div class="panel metric"><div class="label">Usuarios</div><div class="value">{{ total_users }}</div></div></div>
+            <div class="col-6 col-lg-2"><div class="panel metric"><div class="label">Ativos</div><div class="value">{{ active_users }}</div></div></div>
+            <div class="col-6 col-lg-2"><div class="panel metric"><div class="label">Admins</div><div class="value">{{ admin_users }}</div></div></div>
+            <div class="col-6 col-lg-2"><div class="panel metric"><div class="label">Rotas</div><div class="value">{{ total_routes }}</div></div></div>
+            <div class="col-6 col-lg-2"><div class="panel metric"><div class="label">Dist. media</div><div class="value">{{ "%.1f"|format((avg_distance or 0)/1000) }} km</div></div></div>
+            <div class="col-6 col-lg-2"><div class="panel metric"><div class="label">Tempo medio</div><div class="value">{{ "%.0f"|format((avg_duration or 0)/60) }} min</div></div></div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-7">
+                <div class="panel p-3">
+                    <h5 class="mb-3">Usuarios</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Admin</th>
+                                    <th>Criado</th>
+                                    <th>Acoes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        {% if user.is_active %}
+                                        <span class="badge text-bg-success">Ativo</span>
+                                        {% else %}
+                                        <span class="badge text-bg-secondary">Inativo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.is_admin %}
+                                        <span class="badge text-bg-primary">Sim</span>
+                                        {% else %}
+                                        <span class="badge text-bg-dark">Nao</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else '-' }}</td>
+                                    <td class="d-flex gap-1">
+                                        <form method="post" action="{{ url_for('admin.toggle_user_active', user_id=user.id) }}">
+                                            <button class="btn btn-outline-warning btn-sm" type="submit">
+                                                {{ 'Desativar' if user.is_active else 'Ativar' }}
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{{ url_for('admin.toggle_user_admin', user_id=user.id) }}">
+                                            <button class="btn btn-outline-info btn-sm" type="submit">
+                                                {{ 'Remover admin' if user.is_admin else 'Tornar admin' }}
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="panel p-3">
+                    <h5 class="mb-3">Rotas recentes</h5>
+                    <div class="table-responsive" style="max-height: 60vh; overflow:auto;">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Criada em</th>
+                                    <th>Paradas</th>
+                                    <th>Dist.</th>
+                                    <th>Tempo</th>
+                                    <th>Acoes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for route in recent_routes %}
+                                <tr>
+                                    <td>#{{ route.id }}</td>
+                                    <td>{{ route.created_at.strftime('%d/%m %H:%M') if route.created_at else '-' }}</td>
+                                    <td>{{ route.stops }}</td>
+                                    <td>{{ "%.1f"|format((route.total_distance or 0)/1000) }} km</td>
+                                    <td>{{ "%.0f"|format((route.total_duration or 0)/60) }} min</td>
+                                    <td>
+                                        <form method="post" action="{{ url_for('admin.delete_route', route_id=route.id) }}">
+                                            <button class="btn btn-outline-danger btn-sm" type="submit">Excluir</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
