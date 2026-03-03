@@ -3,9 +3,30 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from .. import db
 from ..auth_utils import login_required, login_user, logout_user
-from ..models import User
+from ..models import LoginEvent, User
 
 auth_bp = Blueprint("auth", __name__)
+
+
+def _client_ip():
+    forwarded = (request.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
+    return forwarded or request.remote_addr or "-"
+
+
+def _log_login_attempt(username, success, reason, user=None):
+    try:
+        event = LoginEvent(
+            user_id=user.id if user else None,
+            username=(username or None),
+            success=bool(success),
+            reason=reason,
+            ip_address=_client_ip(),
+            user_agent=(request.headers.get("User-Agent") or "")[:500],
+        )
+        db.session.add(event)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -21,9 +42,11 @@ def login():
 
         user = User.query.filter_by(username=username).first()
         if not user or not check_password_hash(user.password_hash, password):
+            _log_login_attempt(username=username, success=False, reason="usuario_ou_senha_invalidos", user=user)
             flash("Usuario ou senha invalidos.", "danger")
             return render_template("auth/login.html", remember_me=remember_me)
         if not user.is_active:
+            _log_login_attempt(username=username, success=False, reason="conta_desativada", user=user)
             flash("Conta desativada. Fale com o administrador.", "warning")
             return render_template("auth/login.html", remember_me=remember_me)
 
@@ -33,6 +56,7 @@ def login():
 
         session.permanent = remember_me
         login_user(user)
+        _log_login_attempt(username=username, success=True, reason="login_ok", user=user)
         return redirect(next_url)
 
     return render_template("auth/login.html", remember_me=True)

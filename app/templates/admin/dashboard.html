@@ -154,6 +154,7 @@
                                                 {{ 'Remover premium' if user.is_premium else 'Liberar premium' }}
                                             </button>
                                         </form>
+                                        <a class="btn btn-outline-light btn-sm" href="{{ url_for('admin.edit_user', user_id=user.id) }}">Editar</a>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -208,6 +209,49 @@
                                             <button class="btn btn-outline-danger btn-sm" type="submit">Excluir</button>
                                         </form>
                                     </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+            <div class="col-12">
+                <div class="panel p-3">
+                    <h5 class="mb-3">Logs de login recentes</h5>
+                    <div class="table-responsive" style="max-height: 48vh; overflow:auto;">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Quando</th>
+                                    <th>Usuario</th>
+                                    <th>Resultado</th>
+                                    <th>Motivo</th>
+                                    <th>IP</th>
+                                    <th>User-Agent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for evt in recent_login_events %}
+                                <tr>
+                                    <td>{{ evt.created_at.strftime('%d/%m %H:%M:%S') if evt.created_at else '-' }}</td>
+                                    <td>
+                                        <div class="fw-semibold">{{ evt.resolved_username or evt.username or '-' }}</div>
+                                        <small class="text-soft">{{ evt.resolved_name or '-' }}</small>
+                                    </td>
+                                    <td>
+                                        {% if evt.success %}
+                                        <span class="badge text-bg-success">OK</span>
+                                        {% else %}
+                                        <span class="badge text-bg-danger">Erro</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><span class="text-soft">{{ evt.reason or '-' }}</span></td>
+                                    <td>{{ evt.ip_address or '-' }}</td>
+                                    <td><small class="text-soft">{{ evt.user_agent or '-' }}</small></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
