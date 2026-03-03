@@ -424,26 +424,39 @@ body {
 }
 
 @media (max-width: 768px) {
+    html,
+    body {
+        height: auto;
+        min-height: 100dvh;
+        overflow-y: auto;
+    }
+
     body {
         padding: 0;
     }
 
     .app-shell {
         width: 100%;
-        height: 100dvh;
+        height: auto;
+        min-height: 100dvh;
         max-height: none;
         border-radius: 0;
         border: 0;
+        display: block;
+        overflow: visible;
     }
 
     .map-stage {
-        flex-basis: 48dvh;
+        height: 52dvh;
         min-height: 280px;
+        padding: 8px 8px 0;
     }
 
     .bottom-sheet {
-        flex: 1 1 auto;
-        min-height: 0;
+        position: static;
+        height: auto;
+        min-height: auto;
+        overflow: visible;
         padding-bottom: calc(16px + env(safe-area-inset-bottom));
     }
 }
