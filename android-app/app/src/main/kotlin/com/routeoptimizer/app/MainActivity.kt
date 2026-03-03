@@ -41,11 +41,11 @@ class MainActivity : AppCompatActivity() {
     private fun getCandidateUrls(): List<String> {
         val urls = mutableListOf<String>()
         if (isEmulator()) {
-            urls.add("http://10.0.2.2:5000")
+            urls.add("http://10.0.2.2:5000/login")
         } else {
-            urls.add(BuildConfig.WEB_APP_URL)
+            urls.add("${BuildConfig.WEB_APP_URL.trimEnd('/')}/login")
             if (BuildConfig.WEB_APP_URL != "http://191.252.193.10:5000") {
-                urls.add("http://191.252.193.10:5000")
+                urls.add("http://191.252.193.10:5000/login")
             }
         }
         return urls
@@ -53,6 +53,27 @@ class MainActivity : AppCompatActivity() {
             .map { base ->
                 if (base.contains("?")) "$base&app=1" else "$base?app=1"
             }
+    }
+
+    private fun isAllowedAppUrl(url: String?): Boolean {
+        if (url.isNullOrBlank()) {
+            return false
+        }
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            return false
+        }
+
+        val allowedPrefixes = buildList {
+            if (isEmulator()) {
+                add("http://10.0.2.2:5000")
+            }
+            add(BuildConfig.WEB_APP_URL.trimEnd('/'))
+            add("http://191.252.193.10:5000")
+        }.distinct()
+
+        return allowedPrefixes.any { prefix ->
+            url.startsWith(prefix)
+        }
     }
 
     private fun loadCurrentUrl() {
@@ -107,8 +128,7 @@ class MainActivity : AppCompatActivity() {
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
-                val currentTarget = getCandidateUrls().getOrNull(currentUrlIndex) ?: ""
-                if (!url.isNullOrBlank() && (url.startsWith("http://") || url.startsWith("https://")) && url.startsWith(currentTarget)) {
+                if (isAllowedAppUrl(url)) {
                     pageLoaded = true
                     timeoutHandler.removeCallbacksAndMessages(null)
                 }
