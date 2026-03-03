@@ -13,7 +13,7 @@
 <body>
     <div class="app-shell">
         <nav class="app-navbar">
-            <button class="header-icon-btn" type="button" aria-label="Menu">
+            <button class="header-icon-btn" type="button" id="btnHamburger" aria-label="Menu" data-bs-toggle="offcanvas" data-bs-target="#menuDrawer" aria-controls="menuDrawer">
                 <i class="fas fa-bars"></i>
             </button>
             <div class="header-center">
@@ -21,7 +21,7 @@
                     <img class="header-logo" src="{{ url_for('static', filename='img/logo.png') }}" alt="RouteOptimizer">
                     <span>RouteOptimizer</span>
                 </h1>
-                <span>Roteirizacao inteligente</span>
+                <span class="header-subtitle">Roteirizacao inteligente</span>
             </div>
             <button class="header-icon-btn" type="button" id="btnMapLocate" aria-label="Minha Localizacao">
                 <i class="fas fa-location-crosshairs"></i>
@@ -109,6 +109,42 @@
 
             <div id="statusAlert" class="alert d-none mt-3" role="alert"></div>
         </section>
+    </div>
+
+    <div class="offcanvas offcanvas-start menu-drawer" tabindex="-1" id="menuDrawer" aria-labelledby="menuDrawerLabel">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title" id="menuDrawerLabel">Menu</h5>
+            <button type="button" class="btn-close btn-close-white text-reset" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="menu-section">
+                <div class="menu-label">Conta</div>
+                <div class="menu-user">{{ current_user.username if current_user else '-' }}</div>
+            </div>
+
+            <div class="menu-section">
+                <div class="menu-label">Configuracoes</div>
+                <form id="changePasswordForm" action="{{ url_for('auth.change_password') }}" method="post" class="d-grid gap-2">
+                    <input class="form-control" type="password" name="current_password" placeholder="Senha atual" required>
+                    <input class="form-control" type="password" name="new_password" minlength="6" placeholder="Nova senha" required>
+                    <input class="form-control" type="password" name="confirm_password" minlength="6" placeholder="Confirmar nova senha" required>
+                    <button type="submit" class="btn btn-outline-primary">Trocar senha</button>
+                </form>
+            </div>
+
+            {% if current_user and current_user.is_admin %}
+            <div class="menu-section">
+                <div class="menu-label">Administracao</div>
+                <a class="btn btn-outline-success w-100" href="{{ url_for('admin.dashboard') }}">Ir para Painel Admin</a>
+            </div>
+            {% endif %}
+
+            <div class="menu-section">
+                <form method="post" action="{{ url_for('auth.logout') }}">
+                    <button type="submit" class="btn btn-outline-light w-100">Sair</button>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -52,3 +52,27 @@ def admin_required(view_func):
         return abort(403)
 
     return wrapper
+
+
+def premium_required(view_func):
+    @wraps(view_func)
+    def wrapper(*args, **kwargs):
+        user = g.get("current_user")
+        if not user:
+            if request.path.startswith("/api/"):
+                return jsonify({"error": "Autenticacao necessaria"}), 401
+            return redirect(url_for("auth.login", next=request.path))
+
+        if not getattr(user, "is_active", True):
+            if request.path.startswith("/api/"):
+                return jsonify({"error": "Conta desativada"}), 403
+            return abort(403)
+
+        if getattr(user, "is_admin", False) or getattr(user, "is_premium", False):
+            return view_func(*args, **kwargs)
+
+        if request.path.startswith("/api/"):
+            return jsonify({"error": "Plano premium necessario para usar o app"}), 402
+        return abort(403)
+
+    return wrapper

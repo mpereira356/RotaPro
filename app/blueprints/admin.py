@@ -19,6 +19,7 @@ def dashboard():
     total_users = User.query.count()
     active_users = User.query.filter_by(is_active=True).count()
     admin_users = User.query.filter_by(is_admin=True).count()
+    premium_users = User.query.filter_by(is_premium=True).count()
     total_routes = Route.query.count()
 
     avg_distance = db.session.query(func.avg(Route.total_distance)).scalar() or 0
@@ -51,6 +52,7 @@ def dashboard():
         total_users=total_users,
         active_users=active_users,
         admin_users=admin_users,
+        premium_users=premium_users,
         total_routes=total_routes,
         avg_distance=avg_distance,
         avg_duration=avg_duration,
@@ -84,6 +86,16 @@ def toggle_user_admin(user_id):
     user.is_admin = not user.is_admin
     db.session.commit()
     flash(f"Permissao admin de {user.email} {'ativada' if user.is_admin else 'removida'}.", "success")
+    return redirect(url_for("admin.dashboard"))
+
+
+@admin_bp.route("/users/<int:user_id>/toggle-premium", methods=["POST"])
+@admin_required
+def toggle_user_premium(user_id):
+    user = User.query.get_or_404(user_id)
+    user.is_premium = not user.is_premium
+    db.session.commit()
+    flash(f"Premium de {user.username} {'ativado' if user.is_premium else 'removido'}.", "success")
     return redirect(url_for("admin.dashboard"))
 
 

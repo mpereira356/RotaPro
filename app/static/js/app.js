@@ -65,6 +65,10 @@ class RouteOptimizer {
         document.getElementById('btnOpenWazeSequence').addEventListener('click', () => this.openWazeSequence());
         document.getElementById('btnOpenGoogleSequence').addEventListener('click', () => this.openGoogleSequence());
         document.getElementById('btnDownloadApk').addEventListener('click', (event) => this.handleApkDownload(event));
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', (event) => this.handleChangePassword(event));
+        }
         document.getElementById('currentLocation').addEventListener('input', () => {
             // Se o usuario editar a origem, invalida coordenadas anteriores para recalcular.
             this.currentLocation = null;
@@ -126,6 +130,46 @@ class RouteOptimizer {
         } catch (error) {
             console.error('Erro ao validar APK:', error);
             this.showAlert('Nao foi possivel validar o download do APK.', 'danger');
+        }
+    }
+
+    async handleChangePassword(event) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonLabel = submitButton ? submitButton.innerHTML : '';
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
+        }
+
+        try {
+            const formData = new FormData(form);
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Nao foi possivel alterar a senha.');
+            }
+
+            form.reset();
+            this.showAlert(data.message || 'Senha alterada com sucesso.', 'success');
+            const drawerElement = document.getElementById('menuDrawer');
+            if (drawerElement && window.bootstrap && bootstrap.Offcanvas) {
+                const drawer = bootstrap.Offcanvas.getInstance(drawerElement) || new bootstrap.Offcanvas(drawerElement);
+                drawer.hide();
+            }
+        } catch (error) {
+            this.showAlert(error.message || 'Erro ao alterar senha.', 'danger');
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonLabel;
+            }
         }
     }
 

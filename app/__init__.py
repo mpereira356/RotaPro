@@ -16,6 +16,8 @@ def _ensure_user_columns():
             conn.execute(text("ALTER TABLE user ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1"))
         if "is_admin" not in columns:
             conn.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT 0"))
+        if "is_premium" not in columns:
+            conn.execute(text("ALTER TABLE user ADD COLUMN is_premium BOOLEAN NOT NULL DEFAULT 0"))
 
         rows = conn.execute(text("SELECT id, name, email, username FROM user")).fetchall()
         used = set()
@@ -42,6 +44,7 @@ def _ensure_user_columns():
         conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_user_username ON user (username)"))
         conn.execute(text("UPDATE user SET is_active = 1 WHERE is_active IS NULL"))
         conn.execute(text("UPDATE user SET is_admin = 0 WHERE is_admin IS NULL"))
+        conn.execute(text("UPDATE user SET is_premium = 0 WHERE is_premium IS NULL"))
         conn.execute(
             text(
                 "UPDATE user SET is_admin = 1 WHERE lower(username) = 'admin' OR lower(email) = 'admin' OR lower(name) = 'admin'"

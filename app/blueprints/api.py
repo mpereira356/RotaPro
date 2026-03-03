@@ -1,13 +1,13 @@
 from flask import Blueprint, request, jsonify
 from ..services.route_service import RouteService
 from ..models import Route, Address, db
-from ..auth_utils import login_required
+from ..auth_utils import premium_required
 import time
 
 api_bp = Blueprint('api', __name__)
 
 @api_bp.route('/address-suggestions', methods=['GET'])
-@login_required
+@premium_required
 def address_suggestions():
     query = request.args.get('q', '').strip()
     lat = request.args.get('lat')
@@ -27,7 +27,7 @@ def address_suggestions():
     return jsonify({"suggestions": suggestions})
 
 @api_bp.route('/geocode', methods=['GET'])
-@login_required
+@premium_required
 def geocode_address():
     query = request.args.get('address', '').strip()
 
@@ -41,7 +41,7 @@ def geocode_address():
     return jsonify(result)
 
 @api_bp.route('/optimize', methods=['POST'])
-@login_required
+@premium_required
 def optimize():
     data = request.json
     start_lat = data.get('lat')
