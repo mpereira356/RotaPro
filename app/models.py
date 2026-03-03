@@ -11,9 +11,11 @@ class User(db.Model):
     is_premium = db.Column(db.Boolean, nullable=False, default=False)
     password_hash = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    routes = db.relationship("Route", backref="user", lazy=True)
 
 class Route(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     total_distance = db.Column(db.Float) # em metros
     total_duration = db.Column(db.Float) # em segundos

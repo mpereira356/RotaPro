@@ -52,6 +52,14 @@ def _ensure_user_columns():
         )
 
 
+def _ensure_route_columns():
+    with db.engine.begin() as conn:
+        columns = {row[1] for row in conn.execute(text("PRAGMA table_info(route)"))}
+        if "user_id" not in columns:
+            conn.execute(text("ALTER TABLE route ADD COLUMN user_id INTEGER"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_route_user_id ON route (user_id)"))
+
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -81,5 +89,6 @@ def create_app():
 
         db.create_all()
         _ensure_user_columns()
+        _ensure_route_columns()
 
     return app

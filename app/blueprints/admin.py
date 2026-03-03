@@ -36,11 +36,17 @@ def dashboard():
     recent_routes = (
         db.session.query(
             Route.id,
+            Route.user_id,
             Route.created_at,
             Route.total_distance,
             Route.total_duration,
             func.coalesce(route_counts.c.count, 0).label("stops"),
+            User.username.label("username"),
+            User.name.label("user_name"),
+            User.email.label("user_email"),
+            User.is_premium.label("is_premium"),
         )
+        .outerjoin(User, User.id == Route.user_id)
         .outerjoin(route_counts, route_counts.c.route_id == Route.id)
         .order_by(Route.created_at.desc())
         .limit(80)

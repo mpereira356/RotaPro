@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, g, request, jsonify
 from ..services.route_service import RouteService
 from ..models import Route, Address, db
 from ..auth_utils import premium_required
@@ -83,6 +83,7 @@ def optimize():
 
     # 4. Salvar no banco de dados
     new_route = Route(
+        user_id=g.current_user.id if g.get("current_user") else None,
         total_distance=route_data['distance'] if route_data else 0,
         total_duration=route_data['duration'] if route_data else 0
     )

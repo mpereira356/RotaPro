@@ -172,6 +172,8 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Criada em</th>
+                                    <th>Usuario</th>
+                                    <th>Plano</th>
                                     <th>Paradas</th>
                                     <th>Dist.</th>
                                     <th>Tempo</th>
@@ -183,6 +185,21 @@
                                 <tr>
                                     <td>#{{ route.id }}</td>
                                     <td>{{ route.created_at.strftime('%d/%m %H:%M') if route.created_at else '-' }}</td>
+                                    <td>
+                                        {% if route.username %}
+                                        <div class="fw-semibold">{{ route.username }}</div>
+                                        <small class="text-soft">{{ route.user_name or route.user_email or '-' }}</small>
+                                        {% else %}
+                                        <span class="text-soft">Sem usuario</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if route.is_premium %}
+                                        <span class="badge badge-premium">Premium</span>
+                                        {% else %}
+                                        <span class="badge badge-basic">Basico</span>
+                                        {% endif %}
+                                    </td>
                                     <td>{{ route.stops }}</td>
                                     <td>{{ "%.1f"|format((route.total_distance or 0)/1000) }} km</td>
                                     <td>{{ "%.0f"|format((route.total_duration or 0)/60) }} min</td>
