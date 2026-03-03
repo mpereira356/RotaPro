@@ -33,3 +33,22 @@ def login_required(view_func):
         return redirect(url_for("auth.login", next=request.path))
 
     return wrapper
+
+
+def admin_required(view_func):
+    @wraps(view_func)
+    def wrapper(*args, **kwargs):
+        user = g.get("current_user")
+        if user and getattr(user, "is_admin", False):
+            return view_func(*args, **kwargs)
+
+        if not user:
+            if request.path.startswith("/api/"):
+                return jsonify({"error": "Autenticacao necessaria"}), 401
+            return redirect(url_for("auth.login", next=request.path))
+
+        if request.path.startswith("/api/"):
+            return jsonify({"error": "Acesso restrito a administradores"}), 403
+        return redirect(url_for("main.home"))
+
+    return wrapper
