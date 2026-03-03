@@ -14,15 +14,22 @@ def login():
         return redirect(url_for("main.app_page"))
 
     if request.method == "POST":
-        email = (request.form.get("email") or "").strip().lower()
+        username = (request.form.get("username") or "").strip().lower()
         password = request.form.get("password") or ""
         remember_me = request.form.get("remember_me") == "on"
         next_url = request.args.get("next") or url_for("main.app_page")
 
-        user = User.query.filter_by(email=email).first()
+        user = User.query.filter_by(username=username).first()
         if not user or not check_password_hash(user.password_hash, password):
-            flash("Email ou senha invalidos.", "danger")
+            flash("Usuario ou senha invalidos.", "danger")
             return render_template("auth/login.html", remember_me=remember_me)
+        if not user.is_active:
+            flash("Conta desativada. Fale com o administrador.", "warning")
+            return render_template("auth/login.html", remember_me=remember_me)
+
+        if username == "admin" and not user.is_admin:
+            user.is_admin = True
+            db.session.commit()
 
         session.permanent = remember_me
         login_user(user)
@@ -37,11 +44,15 @@ def register():
         return redirect(url_for("main.app_page"))
 
     if request.method == "POST":
+        username = (request.form.get("username") or "").strip().lower()
         name = (request.form.get("name") or "").strip()
         email = (request.form.get("email") or "").strip().lower()
         password = request.form.get("password") or ""
         confirm = request.form.get("confirm_password") or ""
 
+        if len(username) < 3:
+            flash("Informe um usuario com no minimo 3 caracteres.", "warning")
+            return render_template("auth/register.html")
         if len(name) < 2:
             flash("Informe um nome valido.", "warning")
             return render_template("auth/register.html")
@@ -55,11 +66,21 @@ def register():
             flash("As senhas nao conferem.", "warning")
             return render_template("auth/register.html")
 
+        if User.query.filter_by(username=username).first():
+            flash("Ja existe uma conta com esse usuario.", "warning")
+            return render_template("auth/register.html")
         if User.query.filter_by(email=email).first():
             flash("Ja existe uma conta com esse email.", "warning")
             return render_template("auth/register.html")
 
-        user = User(name=name, email=email, password_hash=generate_password_hash(password))
+        user = User(
+            username=username,
+            name=name,
+            email=email,
+            password_hash=generate_password_hash(password),
+            is_active=True,
+            is_admin=(username == "admin"),
+        )
         db.session.add(user)
         db.session.commit()
 

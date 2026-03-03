@@ -1,6 +1,6 @@
 from functools import wraps
 
-from flask import g, jsonify, redirect, request, session, url_for
+from flask import abort, g, jsonify, redirect, request, session, url_for
 
 from .models import User
 
@@ -49,6 +49,6 @@ def admin_required(view_func):
 
         if request.path.startswith("/api/"):
             return jsonify({"error": "Acesso restrito a administradores"}), 403
-        return redirect(url_for("main.home"))
+        return abort(403)
 
     return wrapper
