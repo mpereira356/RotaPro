@@ -292,7 +292,20 @@ class RouteOptimizer {
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Detectando...';
 
+        const resetButton = () => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Detectar';
+        };
+
+        if (!window.isSecureContext) {
+            this.showAlert('Ative HTTPS para usar localizacao no navegador.', 'warning');
+            resetButton();
+            return;
+        }
+
         if (navigator.geolocation) {
+            this.showAlert('Quando o navegador perguntar, clique em "Permitir" para compartilhar sua localizacao.', 'info');
+
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     this.currentLocation = {
@@ -324,20 +337,32 @@ class RouteOptimizer {
                     this.markers.push(currentMarker);
 
                     this.showAlert('Localizacao detectada com sucesso!', 'success');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Detectar';
+                    resetButton();
                 },
                 (error) => {
                     console.error('Erro ao obter localizacao:', error);
-                    this.showAlert('Erro ao obter localizacao. Verifique permissoes do navegador.', 'danger');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Detectar';
+
+                    let message = 'Erro ao obter localizacao. Verifique permissoes do navegador.';
+                    if (error && error.code === 1) {
+                        message = 'Permissao negada. Clique no cadeado da barra de endereco e permita a localizacao para este site.';
+                    } else if (error && error.code === 2) {
+                        message = 'Localizacao indisponivel no momento. Tente novamente em instantes.';
+                    } else if (error && error.code === 3) {
+                        message = 'Tempo esgotado ao obter localizacao. Tente novamente.';
+                    }
+
+                    this.showAlert(message, 'danger');
+                    resetButton();
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
                 }
             );
         } else {
             this.showAlert('Geolocalizacao nao e suportada neste navegador.', 'danger');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Detectar';
+            resetButton();
         }
     }
 
