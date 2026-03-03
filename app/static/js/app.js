@@ -41,6 +41,7 @@ class RouteOptimizer {
         document.getElementById('btnCalculateRoute').addEventListener('click', () => this.calculateRoute());
         document.getElementById('btnClear').addEventListener('click', () => this.clearAll());
         document.getElementById('btnAddAddress').addEventListener('click', () => this.addAddressFromInput());
+        document.getElementById('btnAddAddressList').addEventListener('click', () => this.addAddressListFromInput());
         document.getElementById('btnDownloadApk').addEventListener('click', (event) => this.handleApkDownload(event));
         document.getElementById('currentLocation').addEventListener('input', () => {
             // Se o usuario editar a origem, invalida coordenadas anteriores para recalcular.
@@ -101,6 +102,30 @@ class RouteOptimizer {
     // ============================================
     // Lista de Enderecos
     // ============================================
+    splitAddresses(rawText) {
+        return (rawText || '')
+            .split(/\r?\n|;/)
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0);
+    }
+
+    addAddresses(entries) {
+        if (!entries || entries.length === 0) {
+            return 0;
+        }
+
+        let added = 0;
+        entries.forEach((entry) => {
+            if (!this.addresses.includes(entry)) {
+                this.addresses.push(entry);
+                added += 1;
+            }
+        });
+
+        this.renderAddressItems();
+        return added;
+    }
+
     addAddressFromInput() {
         const addressInput = document.getElementById('addressInput');
         const value = (addressInput.value || '').trim();
@@ -110,11 +135,35 @@ class RouteOptimizer {
             return;
         }
 
-        this.addresses.push(value);
+        const added = this.addAddresses([value]);
+        if (added === 0) {
+            this.showAlert('Esse endereco ja foi adicionado.', 'info');
+            return;
+        }
+
         addressInput.value = '';
         this.hideSuggestions();
         this.lastSuggestionQuery = '';
-        this.renderAddressItems();
+    }
+
+    addAddressListFromInput() {
+        const bulkInput = document.getElementById('addressBulkInput');
+        const entries = this.splitAddresses(bulkInput.value || '');
+
+        if (entries.length === 0) {
+            this.showAlert('Cole uma lista valida (uma linha por endereco).', 'warning');
+            return;
+        }
+
+        const added = this.addAddresses(entries);
+        bulkInput.value = '';
+
+        if (added === 0) {
+            this.showAlert('Nenhum novo endereco foi adicionado (todos ja existem).', 'info');
+            return;
+        }
+
+        this.showAlert(`${added} endereco(s) adicionado(s) com sucesso!`, 'success');
     }
 
     removeAddress(index) {
@@ -171,6 +220,11 @@ class RouteOptimizer {
         }
 
         if (query === this.lastSuggestionQuery) {
+            return;
+        }
+
+        if (!this.currentLocation) {
+            this.hideSuggestions();
             return;
         }
 
@@ -652,6 +706,7 @@ class RouteOptimizer {
 
     clearAll() {
         document.getElementById('addressInput').value = '';
+        document.getElementById('addressBulkInput').value = '';
         document.getElementById('addressList').value = '';
         document.getElementById('currentLocation').value = '';
         document.getElementById('coordsDisplay').textContent = 'Digite sua origem manualmente ou clique em "Detectar"';

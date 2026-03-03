@@ -49,6 +49,8 @@ class RouteService:
         """Busca opcoes de endereco com detalhes de bairro/cidade via Nominatim."""
         if not query or len(query.strip()) < 3:
             return []
+        if lat is None or lon is None:
+            return []
 
         base_url = "https://nominatim.openstreetmap.org/search"
         base_params = {
@@ -65,23 +67,14 @@ class RouteService:
         }
 
         try:
-            # 1) Busca com foco na regiao atual (quando houver localizacao).
             params = dict(base_params)
-            if lat is not None and lon is not None:
-                params["viewbox"] = RouteService._build_viewbox(float(lat), float(lon))
-                params["bounded"] = 1
+            params["viewbox"] = RouteService._build_viewbox(float(lat), float(lon))
+            params["bounded"] = 1
 
             response = requests.get(base_url, params=params, headers=headers, timeout=10)
             response.raise_for_status()
             data = response.json() or []
             results = RouteService._parse_nominatim_results(data)
-
-            # 2) Fallback sem restricao geografica se vier vazio.
-            if not results and lat is not None and lon is not None:
-                response = requests.get(base_url, params=base_params, headers=headers, timeout=10)
-                response.raise_for_status()
-                data = response.json() or []
-                results = RouteService._parse_nominatim_results(data)
 
             return results
         except Exception as e:
