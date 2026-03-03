@@ -7,6 +7,7 @@ import android.os.Handler
 import android.os.Looper
 import android.webkit.GeolocationPermissions
 import android.webkit.SslErrorHandler
+import android.graphics.Color
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -56,6 +57,16 @@ class MainActivity : AppCompatActivity() {
             currentUrlIndex = 0
         }
         pageLoaded = false
+        webView.loadData(
+            """
+            <html><body style='font-family:sans-serif;padding:16px;background:#0f141b;color:#e7edf7;'>
+            <h3>Abrindo RouteOptimizer...</h3>
+            <p>Tentando: <b>${urls[currentUrlIndex]}</b></p>
+            </body></html>
+            """.trimIndent(),
+            "text/html",
+            "UTF-8"
+        )
         webView.loadUrl(urls[currentUrlIndex])
         scheduleLoadTimeout()
     }
@@ -88,11 +99,15 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         webView = findViewById(R.id.webView)
+        webView.setBackgroundColor(Color.parseColor("#0f141b"))
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
-                pageLoaded = true
-                timeoutHandler.removeCallbacksAndMessages(null)
+                val currentTarget = getCandidateUrls().getOrNull(currentUrlIndex) ?: ""
+                if (!url.isNullOrBlank() && (url.startsWith("http://") || url.startsWith("https://")) && url.startsWith(currentTarget)) {
+                    pageLoaded = true
+                    timeoutHandler.removeCallbacksAndMessages(null)
+                }
             }
 
             override fun onReceivedError(
@@ -191,11 +206,9 @@ class MainActivity : AppCompatActivity() {
             displayZoomControls = false
         }
 
-        if (savedInstanceState != null) {
-            webView.restoreState(savedInstanceState)
-        } else {
-            loadCurrentUrl()
-        }
+        // Em alguns aparelhos restoreState pode manter pagina em branco.
+        // Forca sempre um carregamento novo da URL configurada.
+        loadCurrentUrl()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
