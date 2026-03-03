@@ -409,26 +409,37 @@ body {
 @media (max-width: 768px) {
     html,
     body {
+        height: auto;
         min-height: 100dvh;
+        overflow-x: hidden;
+    }
+
+    .app-main {
+        display: block;
+        overflow: visible;
+        min-height: auto;
     }
 
     .left-panel {
         max-height: none;
-        min-height: calc(100dvh - 50px - 44dvh);
+        min-height: 0;
+        overflow: visible;
         border-right: none;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         padding: 10px;
-        padding-bottom: calc(70px + env(safe-area-inset-bottom));
+        padding-bottom: calc(92px + env(safe-area-inset-bottom));
     }
 
     .right-panel {
         max-height: none;
-        height: 44dvh;
-        min-height: 260px;
+        height: 38dvh;
+        min-height: 220px;
     }
 
     .row {
         flex-direction: column;
+        margin-left: 0;
+        margin-right: 0;
     }
 
     .col-md-4,
@@ -451,6 +462,11 @@ body {
 
     .navbar-subtitle {
         display: none;
+    }
+
+    .app-navbar .container-fluid {
+        flex-wrap: wrap;
+        row-gap: 6px;
     }
 
     .form-control,
@@ -484,7 +500,7 @@ body {
 
     .mobile-action-bar {
         position: sticky;
-        bottom: calc(8px + env(safe-area-inset-bottom));
+        bottom: calc(10px + env(safe-area-inset-bottom));
         z-index: 1000;
         padding: 8px;
         border-radius: 10px;
