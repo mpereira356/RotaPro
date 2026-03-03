@@ -1,0 +1,112 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0f141b">
+    <title>RouteOptimizer - Roteirizacao Inteligente</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar app-navbar sticky-top">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1"><i class="fas fa-route"></i> RouteOptimizer</span>
+            <span class="navbar-subtitle">Roteirizacao inteligente para entregadores</span>
+        </div>
+    </nav>
+
+    <div class="container-fluid app-main">
+        <div class="row h-100">
+            <div class="col-md-4 left-panel">
+                <div class="card app-card shadow-sm mb-3">
+                    <div class="card-header app-card-header">
+                        <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> Dados de Entrada</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="section-block mb-3">
+                            <label class="form-label fw-bold">Sua localizacao atual</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="currentLocation" placeholder="Clique em Detectar" readonly>
+                                <button class="btn btn-outline-primary" type="button" id="btnGetLocation">
+                                    <i class="fas fa-location-crosshairs"></i> Detectar
+                                </button>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                <span id="coordsDisplay">Clique em "Detectar" para obter suas coordenadas</span>
+                            </small>
+                        </div>
+
+                        <div class="section-block mb-3">
+                            <label class="form-label fw-bold">Adicionar enderecos</label>
+                            <div class="position-relative">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="addressInput" placeholder="Digite um endereco e clique no +">
+                                    <button class="btn btn-outline-success" type="button" id="btnAddAddress" title="Adicionar endereco">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div id="addressSuggestions" class="list-group autocomplete-suggestions d-none"></div>
+                            </div>
+
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small text-muted">Enderecos cadastrados</span>
+                                    <span class="badge text-bg-secondary" id="addressCount">0</span>
+                                </div>
+                                <div id="addressItems" class="list-group address-items"></div>
+                            </div>
+
+                            <textarea class="d-none" id="addressList"></textarea>
+                            <small class="text-muted d-block mt-2">Use o botao + para registrar cada parada</small>
+                        </div>
+
+                        <div class="d-grid gap-2 mb-1 mobile-action-bar">
+                            <button class="btn btn-success btn-lg" id="btnCalculateRoute" type="button">
+                                <i class="fas fa-calculator"></i> Calcular Melhor Rota
+                            </button>
+                            <a class="btn btn-outline-primary btn-lg" id="btnDownloadApk" href="/download/android-apk">
+                                <i class="fab fa-android"></i> Baixar APK
+                            </a>
+                            <button class="btn btn-secondary" id="btnClear" type="button">
+                                <i class="fas fa-trash"></i> Limpar
+                            </button>
+                        </div>
+
+                        <div id="statusAlert" class="alert d-none mt-3" role="alert"></div>
+                    </div>
+                </div>
+
+                <div class="card app-card shadow-sm" id="resultsCard" style="display: none;">
+                    <div class="card-header app-card-header-success">
+                        <h5 class="mb-0"><i class="fas fa-list-ol"></i> Rota Otimizada</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="result-stats mb-3">
+                            <div class="result-stat-box">
+                                <span class="label">Distancia total</span>
+                                <strong><span id="totalDistance">0</span> km</strong>
+                            </div>
+                            <div class="result-stat-box">
+                                <span class="label">Tempo estimado</span>
+                                <strong><span id="totalDuration">0</span> min</strong>
+                            </div>
+                        </div>
+                        <div id="routeList" class="list-group"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8 right-panel">
+                <div id="map" class="map-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
