@@ -6,10 +6,18 @@
     <title>Login | RouteOptimizer</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background: #0f172a; color: #e6eeff; font-family: Poppins, Inter, sans-serif; }
+        :root { --bg:#0f172a; --panel:linear-gradient(160deg, #182646 0%, #101c34 100%); --line:rgba(148,163,184,.22); --muted:#9eb1d6; }
+        body { background:
+            radial-gradient(circle at 8% 0%, rgba(37,99,235,.22), transparent 30%),
+            radial-gradient(circle at 94% 86%, rgba(34,197,94,.1), transparent 30%),
+            var(--bg); color: #e6eeff; font-family: Poppins, Inter, sans-serif; }
         .wrap { min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
-        .cardx { width: min(460px, 100%); background: linear-gradient(160deg, #16233f, #111d35); border: 1px solid rgba(148,163,184,.22); border-radius: 18px; padding: 22px; box-shadow: 0 18px 46px rgba(2,6,23,.42); }
-        .logo { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; }
+        .cardx { width: min(460px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px; box-shadow: 0 18px 46px rgba(2,6,23,.42); }
+        .logo { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; border:1px solid rgba(148,163,184,.34); }
+        .txt-muted { color: var(--muted); }
+        .form-control { background: rgba(15,23,42,.82); color: #e6eeff; border: 1px solid rgba(148,163,184,.3); }
+        .form-control:focus { background: rgba(15,23,42,.95); color:#fff; border-color: rgba(37,99,235,.7); box-shadow: 0 0 0 .2rem rgba(37,99,235,.2); }
+        .form-check-label { color: #c8d8f8; font-size: .92rem; }
     </style>
 </head>
 <body>
@@ -19,7 +27,7 @@
                 <img class="logo" src="{{ url_for('static', filename='img/logo.png') }}" alt="RouteOptimizer">
                 <div>
                     <h1 class="h5 mb-0">Entrar</h1>
-                    <small class="text-secondary">Acesse sua conta</small>
+                    <small class="txt-muted">Acesse sua conta</small>
                 </div>
             </div>
 
@@ -39,6 +47,10 @@
                 <div class="mb-3">
                     <label class="form-label">Senha</label>
                     <input class="form-control" name="password" type="password" required>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="remember_me" id="rememberMe" {% if remember_me %}checked{% endif %}>
+                    <label class="form-check-label" for="rememberMe">Permanecer logado neste dispositivo</label>
                 </div>
                 <div class="d-grid gap-2">
                     <button class="btn btn-success" type="submit">Entrar</button>
