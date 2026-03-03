@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+    private var currentUrlIndex = 0
 
     private fun isEmulator(): Boolean {
         val fingerprint = Build.FINGERPRINT.lowercase()
@@ -29,12 +30,25 @@ class MainActivity : AppCompatActivity() {
             || (brand.contains("generic") && device.contains("generic"))
     }
 
-    private fun getBaseUrl(): String {
-        return if (isEmulator()) {
-            "http://10.0.2.2:5000"
+    private fun getCandidateUrls(): List<String> {
+        val urls = mutableListOf<String>()
+        if (isEmulator()) {
+            urls.add("http://10.0.2.2:5000")
         } else {
-            BuildConfig.WEB_APP_URL
+            urls.add(BuildConfig.WEB_APP_URL)
+            if (BuildConfig.WEB_APP_URL != "http://191.252.193.10:5000") {
+                urls.add("http://191.252.193.10:5000")
+            }
         }
+        return urls.distinct()
+    }
+
+    private fun loadCurrentUrl() {
+        val urls = getCandidateUrls()
+        if (currentUrlIndex < 0 || currentUrlIndex >= urls.size) {
+            currentUrlIndex = 0
+        }
+        webView.loadUrl(urls[currentUrlIndex])
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -50,7 +64,14 @@ class MainActivity : AppCompatActivity() {
                 error: WebResourceError?
             ) {
                 if (request?.isForMainFrame == true) {
-                    val baseUrl = getBaseUrl()
+                    val urls = getCandidateUrls()
+                    if (currentUrlIndex < urls.lastIndex) {
+                        currentUrlIndex += 1
+                        loadCurrentUrl()
+                        return
+                    }
+
+                    val baseUrl = urls.getOrNull(currentUrlIndex) ?: "URL nao definida"
                     val message = error?.description ?: "Falha ao carregar o app."
                     view?.loadData(
                         """
@@ -58,7 +79,7 @@ class MainActivity : AppCompatActivity() {
                         <h3>Nao foi possivel abrir o app</h3>
                         <p>URL configurada: <b>$baseUrl</b></p>
                         <p>Erro: $message</p>
-                        <p>No celular real, configure WEB_APP_URL no build.gradle com sua URL publica HTTPS.</p>
+                        <p>Verifique se o servidor esta online e acessivel no celular.</p>
                         </body></html>
                         """.trimIndent(),
                         "text/html",
@@ -92,7 +113,7 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState)
         } else {
-            webView.loadUrl(getBaseUrl())
+            loadCurrentUrl()
         }
     }
 

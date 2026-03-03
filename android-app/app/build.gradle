@@ -11,9 +11,9 @@ android {
         applicationId "com.routeoptimizer.app"
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
-        buildConfigField "String", "WEB_APP_URL", "\"https://SEU_DOMINIO_AQUI\""
+        versionCode 2
+        versionName "1.1"
+        buildConfigField "String", "WEB_APP_URL", "\"http://191.252.193.10:5000\""
     }
 
     buildTypes {
