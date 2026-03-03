@@ -53,6 +53,9 @@ class RouteOptimizer {
 
     attachEventListeners() {
         document.getElementById('btnGetLocation').addEventListener('click', () => this.getCurrentLocation());
+        document.getElementById('btnMapLocate').addEventListener('click', () => this.getCurrentLocation());
+        document.getElementById('btnZoomIn').addEventListener('click', () => this.map.zoomIn());
+        document.getElementById('btnZoomOut').addEventListener('click', () => this.map.zoomOut());
         document.getElementById('btnCalculateRoute').addEventListener('click', () => this.calculateRoute());
         document.getElementById('btnClear').addEventListener('click', () => this.clearAll());
         document.getElementById('btnAddAddress').addEventListener('click', () => this.addAddressFromInput());
@@ -213,10 +216,17 @@ class RouteOptimizer {
             list.appendChild(empty);
         } else {
             this.addresses.forEach((address, index) => {
+                const [titlePart, ...rest] = address.split(' - ');
+                const subtitlePart = rest.length > 0 ? rest.join(' - ') : 'Sao Paulo';
                 const item = document.createElement('div');
                 item.className = 'address-item';
                 item.innerHTML = `
-                    <span><strong>${index + 1}.</strong> ${address}</span>
+                    <i class="fas fa-location-dot address-icon"></i>
+                    <div class="address-item-main">
+                        <div class="address-title">${index + 1}. ${titlePart}</div>
+                        <div class="address-subtitle">${subtitlePart}</div>
+                    </div>
+                    <i class="fas fa-grip-lines address-drag" aria-hidden="true"></i>
                     <button class="btn-remove-address" type="button" data-index="${index}" title="Remover">
                         <i class="fas fa-times"></i>
                     </button>
