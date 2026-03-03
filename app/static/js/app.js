@@ -11,14 +11,29 @@ class RouteOptimizer {
         this.optimizedRoute = null;
         this.autocompleteTimer = null;
         this.resizeTimer = null;
+        this.currentLocationLookupTimer = null;
         this.currentSuggestions = [];
         this.lastSuggestionQuery = '';
         this.addresses = [];
 
         this.initializeMap();
+        this.adjustUiForEmbeddedApp();
         this.attachEventListeners();
         this.attachViewportListeners();
         this.renderAddressItems();
+    }
+
+    adjustUiForEmbeddedApp() {
+        const btnDownloadApk = document.getElementById('btnDownloadApk');
+        if (!btnDownloadApk) {
+            return;
+        }
+
+        const userAgent = (navigator.userAgent || '').toLowerCase();
+        const isAndroidEmbeddedApp = userAgent.includes('routeoptimizerandroidapp');
+        if (isAndroidEmbeddedApp) {
+            btnDownloadApk.classList.add('d-none');
+        }
     }
 
     // ============================================
@@ -42,10 +57,20 @@ class RouteOptimizer {
         document.getElementById('btnClear').addEventListener('click', () => this.clearAll());
         document.getElementById('btnAddAddress').addEventListener('click', () => this.addAddressFromInput());
         document.getElementById('btnAddAddressList').addEventListener('click', () => this.addAddressListFromInput());
+        document.getElementById('btnOpenWazeSequence').addEventListener('click', () => this.openWazeSequence());
+        document.getElementById('btnOpenGoogleSequence').addEventListener('click', () => this.openGoogleSequence());
         document.getElementById('btnDownloadApk').addEventListener('click', (event) => this.handleApkDownload(event));
         document.getElementById('currentLocation').addEventListener('input', () => {
             // Se o usuario editar a origem, invalida coordenadas anteriores para recalcular.
             this.currentLocation = null;
+            this.scheduleCurrentLocationPreview();
+        });
+        document.getElementById('currentLocation').addEventListener('blur', () => this.previewCurrentLocation());
+        document.getElementById('currentLocation').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                this.previewCurrentLocation();
+            }
         });
 
         const addressInput = document.getElementById('addressInput');
@@ -345,11 +370,52 @@ class RouteOptimizer {
     // ============================================
     // Geolocalizacao
     // ============================================
-    setCurrentLocation(lat, lon, popupTitle = 'Sua localizacao atual') {
+    scheduleCurrentLocationPreview() {
+        clearTimeout(this.currentLocationLookupTimer);
+        this.currentLocationLookupTimer = setTimeout(() => {
+            this.previewCurrentLocation();
+        }, 700);
+    }
+
+    async previewCurrentLocation() {
+        const currentLocationInput = document.getElementById('currentLocation');
+        const typedOrigin = (currentLocationInput.value || '').trim();
+        const coordsDisplay = document.getElementById('coordsDisplay');
+
+        if (!typedOrigin) {
+            coordsDisplay.textContent = 'Digite sua origem manualmente ou clique em "Detectar"';
+            return;
+        }
+
+        const parsedCoords = this.parseLatLon(typedOrigin);
+        if (parsedCoords) {
+            coordsDisplay.textContent = `Coordenadas informadas: ${parsedCoords.lat.toFixed(6)}, ${parsedCoords.lon.toFixed(6)}`;
+            return;
+        }
+
+        if (typedOrigin.length < 5) {
+            return;
+        }
+
+        try {
+            const params = new URLSearchParams({ address: typedOrigin });
+            const response = await fetch(`/api/geocode?${params.toString()}`);
+            const data = await response.json();
+            if (response.ok && data.display_name) {
+                coordsDisplay.textContent = `Endereco confirmado: ${data.display_name}`;
+            } else {
+                coordsDisplay.textContent = 'Nao foi possivel confirmar esse endereco. Revise o texto.';
+            }
+        } catch (error) {
+            coordsDisplay.textContent = 'Nao foi possivel confirmar esse endereco agora.';
+        }
+    }
+
+    setCurrentLocation(lat, lon, popupTitle = 'Sua localizacao atual', inputText = null, statusText = null) {
         this.currentLocation = { lat, lon };
 
-        document.getElementById('currentLocation').value = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-        document.getElementById('coordsDisplay').textContent =
+        document.getElementById('currentLocation').value = inputText || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+        document.getElementById('coordsDisplay').textContent = statusText ||
             `Latitude: ${lat.toFixed(6)}, Longitude: ${lon.toFixed(6)}`;
 
         this.map.setView([lat, lon], 15);
@@ -404,7 +470,13 @@ class RouteOptimizer {
 
         const parsedCoords = this.parseLatLon(typedOrigin);
         if (parsedCoords) {
-            this.setCurrentLocation(parsedCoords.lat, parsedCoords.lon, 'Origem definida manualmente');
+            this.setCurrentLocation(
+                parsedCoords.lat,
+                parsedCoords.lon,
+                'Origem definida manualmente',
+                typedOrigin,
+                `Coordenadas confirmadas: ${parsedCoords.lat.toFixed(6)}, ${parsedCoords.lon.toFixed(6)}`
+            );
             this.showAlert('Origem manual definida com sucesso!', 'success');
             return true;
         }
@@ -419,7 +491,13 @@ class RouteOptimizer {
                 throw new Error(data.error || 'Nao foi possivel localizar a origem informada');
             }
 
-            this.setCurrentLocation(data.lat, data.lon, 'Origem definida manualmente');
+            this.setCurrentLocation(
+                data.lat,
+                data.lon,
+                'Origem definida manualmente',
+                typedOrigin,
+                `Endereco confirmado: ${data.display_name || typedOrigin}`
+            );
             this.showAlert('Origem localizada com sucesso!', 'success');
             return true;
         } catch (error) {
@@ -596,6 +674,74 @@ class RouteOptimizer {
 
     buildGoogleMapsUrl(lat, lon) {
         return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=driving`;
+    }
+
+    buildGoogleMapsMultiStopUrl() {
+        if (!this.currentLocation || !this.optimizedRoute || !this.optimizedRoute.optimized_order || this.optimizedRoute.optimized_order.length === 0) {
+            return null;
+        }
+
+        const points = this.optimizedRoute.optimized_order;
+        const origin = `${this.currentLocation.lat},${this.currentLocation.lon}`;
+        const destinationPoint = points[points.length - 1];
+        const destination = `${destinationPoint.lat},${destinationPoint.lon}`;
+        const params = new URLSearchParams({
+            api: '1',
+            origin,
+            destination,
+            travelmode: 'driving'
+        });
+
+        if (points.length > 1) {
+            const waypoints = points
+                .slice(0, points.length - 1)
+                .map((p) => `${p.lat},${p.lon}`)
+                .join('|');
+            params.set('waypoints', waypoints);
+        }
+
+        return `https://www.google.com/maps/dir/?${params.toString()}`;
+    }
+
+    openGoogleSequence() {
+        const url = this.buildGoogleMapsMultiStopUrl();
+        if (!url) {
+            this.showAlert('Calcule uma rota primeiro.', 'warning');
+            return;
+        }
+        window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    openWazeSequence() {
+        if (!this.optimizedRoute || !this.optimizedRoute.optimized_order || this.optimizedRoute.optimized_order.length === 0) {
+            this.showAlert('Calcule uma rota primeiro.', 'warning');
+            return;
+        }
+
+        const urls = this.optimizedRoute.optimized_order.map((location) => this.buildWazeUrl(location.lat, location.lon));
+        let index = 0;
+        let openedCount = 0;
+
+        const openNext = () => {
+            if (index >= urls.length) {
+                if (openedCount === 0) {
+                    this.showAlert('O navegador bloqueou as aberturas automáticas. Use os botoes Waze da lista.', 'warning');
+                } else {
+                    this.showAlert(`Sequencia enviada ao Waze (${openedCount}/${urls.length}).`, 'success');
+                }
+                return;
+            }
+
+            const popup = window.open(urls[index], '_blank', 'noopener,noreferrer');
+            if (popup !== null) {
+                openedCount += 1;
+            }
+            index += 1;
+            setTimeout(openNext, 1300);
+        };
+
+        this.showAlert('Abrindo paradas em sequencia no Waze...', 'info');
+        openNext();
     }
 
     displayMapRoute(data) {

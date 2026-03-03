@@ -1,6 +1,7 @@
 ﻿package com.routeoptimizer.app
 
 import android.annotation.SuppressLint
+import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -11,7 +12,6 @@ import android.graphics.Color
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
-import android.webkit.SslError
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -204,6 +204,7 @@ class MainActivity : AppCompatActivity() {
             setSupportZoom(false)
             builtInZoomControls = false
             displayZoomControls = false
+            userAgentString = "${userAgentString} RouteOptimizerAndroidApp/1.2"
         }
 
         // Em alguns aparelhos restoreState pode manter pagina em branco.
