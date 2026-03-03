@@ -73,6 +73,6 @@ def premium_required(view_func):
 
         if request.path.startswith("/api/"):
             return jsonify({"error": "Plano premium necessario para usar o app"}), 402
-        return abort(403)
+        return redirect(url_for("main.premium_required_page", next=request.path))
 
     return wrapper

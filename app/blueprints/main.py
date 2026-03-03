@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from flask import Blueprint, current_app, jsonify, render_template, send_from_directory
-from ..auth_utils import premium_required
+from flask import Blueprint, current_app, g, jsonify, redirect, render_template, request, send_from_directory, url_for
+from ..auth_utils import login_required, premium_required
 
 main_bp = Blueprint('main', __name__)
 
@@ -14,6 +14,16 @@ def home():
 @premium_required
 def app_page():
     return render_template('index.html')
+
+
+@main_bp.route('/premium-required')
+@login_required
+def premium_required_page():
+    user = g.get("current_user")
+    if user and (getattr(user, "is_admin", False) or getattr(user, "is_premium", False)):
+        return redirect(url_for("main.app_page"))
+
+    return render_template("premium_required.html", next_url=(request.args.get("next") or "/app"))
 
 
 @main_bp.route('/download/android-apk', methods=['GET'])
