@@ -6,3 +6,10 @@ commandlinetools.zip
 gradle-8.7-bin.zip
 gradle-8.7/
 instance/route_optimizer.db
+
+android-app/.gradle/
+android-app/app/build/
+android-app/local.properties
+android-app/gradle/
+android-app/gradlew
+android-app/gradlew.bat
