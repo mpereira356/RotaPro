@@ -526,7 +526,11 @@ class RouteOptimizer {
             this.optimizedRoute = data;
             this.displayResults(data);
             this.displayMapRoute(data);
-            this.showAlert('Rota otimizada com sucesso!', 'success');
+            if (Array.isArray(data.not_found) && data.not_found.length > 0) {
+                this.showAlert(`Rota otimizada, mas ${data.not_found.length} endereco(s) nao foram localizados.`, 'warning');
+            } else {
+                this.showAlert('Rota otimizada com sucesso!', 'success');
+            }
 
         } catch (error) {
             console.error('Erro:', error);

@@ -1,5 +1,7 @@
 ﻿import math
 import requests
+import re
+import unicodedata
 
 
 class RouteService:
@@ -82,16 +84,71 @@ class RouteService:
             return []
 
     @staticmethod
-    def geocode(address):
-        """Converte endereco em coordenadas usando Nominatim."""
+    def geocode(address, lat=None, lon=None):
+        """Converte endereco em coordenadas usando Nominatim com tentativas de fallback."""
+        return RouteService._geocode_with_fallback(address, lat=lat, lon=lon)
+
+    @staticmethod
+    def _strip_accents(text):
+        normalized = unicodedata.normalize("NFKD", text)
+        return "".join(ch for ch in normalized if not unicodedata.combining(ch))
+
+    @staticmethod
+    def _normalize_address_text(address):
+        text = (address or "").strip()
+        if not text:
+            return ""
+
+        text = text.replace("–", ", ").replace("—", ", ").replace("−", ", ")
+        text = text.replace("’", "'").replace("`", "'")
+        text = re.sub(r"\s*[,;]\s*", ", ", text)
+        text = re.sub(r"\s+", " ", text).strip(" ,")
+        return text
+
+    @staticmethod
+    def _build_geocode_candidates(address):
+        normalized = RouteService._normalize_address_text(address)
+        if not normalized:
+            return []
+
+        candidates = [normalized]
+
+        compact_match = re.match(r"^\s*([^,]+),\s*([0-9A-Za-z/-]+)", normalized)
+        if compact_match:
+            street = compact_match.group(1).strip()
+            number = compact_match.group(2).strip()
+            candidates.append(f"{street}, {number}, Sao Paulo, SP, Brasil")
+
+        parts = [p.strip() for p in normalized.split(",") if p.strip()]
+        if len(parts) >= 2:
+            candidates.append(f"{parts[0]}, {parts[1]}, Sao Paulo, SP, Brasil")
+
+        candidates.append(RouteService._strip_accents(normalized))
+
+        unique = []
+        seen = set()
+        for query in candidates:
+            key = query.lower()
+            if query and key not in seen:
+                seen.add(key)
+                unique.append(query)
+        return unique
+
+    @staticmethod
+    def _geocode_once(query, lat=None, lon=None, bounded=False):
         url = "https://nominatim.openstreetmap.org/search"
         params = {
-            "q": address,
-            "format": "json",
+            "q": query,
+            "format": "jsonv2",
             "addressdetails": 1,
             "countrycodes": "br",
             "limit": 1
         }
+        if lat is not None and lon is not None:
+            params["viewbox"] = RouteService._build_viewbox(float(lat), float(lon), delta=0.7)
+            if bounded:
+                params["bounded"] = 1
+
         headers = {
             "User-Agent": "RouteOptimizerApp/1.0"
         }
@@ -107,6 +164,19 @@ class RouteService:
                 }
         except Exception as e:
             print(f"Erro no geocoding: {e}")
+        return None
+
+    @staticmethod
+    def _geocode_with_fallback(address, lat=None, lon=None):
+        for query in RouteService._build_geocode_candidates(address):
+            if lat is not None and lon is not None:
+                result = RouteService._geocode_once(query, lat=lat, lon=lon, bounded=True)
+                if result:
+                    return result
+
+            result = RouteService._geocode_once(query, lat=lat, lon=lon, bounded=False)
+            if result:
+                return result
         return None
 
     @staticmethod

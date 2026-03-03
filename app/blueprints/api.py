@@ -51,15 +51,18 @@ def optimize():
     
     # 1. Geocodificar endereços
     geocoded_locations = []
+    not_found_addresses = []
     for addr_str in address_list:
         if not addr_str.strip(): continue
-        res = RouteService.geocode(addr_str)
+        res = RouteService.geocode(addr_str, lat=start_coords["lat"], lon=start_coords["lon"])
         if res:
             geocoded_locations.append({
                 "lat": res['lat'],
                 "lon": res['lon'],
                 "address": addr_str
             })
+        else:
+            not_found_addresses.append(addr_str)
         # Pequena pausa para respeitar limites do Nominatim (1 req/sec recomendado)
         time.sleep(1)
 
@@ -99,5 +102,6 @@ def optimize():
         "optimized_order": optimized_order,
         "geometry": route_data['geometry'] if route_data else None,
         "distance": route_data['distance'] if route_data else 0,
-        "duration": route_data['duration'] if route_data else 0
+        "duration": route_data['duration'] if route_data else 0,
+        "not_found": not_found_addresses
     })
