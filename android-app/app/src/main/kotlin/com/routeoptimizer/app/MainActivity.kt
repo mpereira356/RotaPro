@@ -48,7 +48,11 @@ class MainActivity : AppCompatActivity() {
                 urls.add("http://191.252.193.10:5000")
             }
         }
-        return urls.distinct()
+        return urls
+            .distinct()
+            .map { base ->
+                if (base.contains("?")) "$base&app=1" else "$base?app=1"
+            }
     }
 
     private fun loadCurrentUrl() {

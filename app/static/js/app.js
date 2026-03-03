@@ -31,7 +31,9 @@ class RouteOptimizer {
 
         const userAgent = (navigator.userAgent || '').toLowerCase();
         const isAndroidEmbeddedApp = userAgent.includes('routeoptimizerandroidapp');
-        if (isAndroidEmbeddedApp) {
+        const queryParams = new URLSearchParams(window.location.search);
+        const isAppModeParam = queryParams.get('app') === '1';
+        if (isAndroidEmbeddedApp || isAppModeParam) {
             btnDownloadApk.classList.add('d-none');
         }
     }
