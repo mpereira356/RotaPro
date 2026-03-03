@@ -1,13 +1,13 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from .config import Config
-from .auth_utils import load_current_user
 
 db = SQLAlchemy()
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    from .auth_utils import load_current_user
 
     db.init_app(app)
 
