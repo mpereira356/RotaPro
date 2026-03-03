@@ -50,6 +50,30 @@
             vertical-align: middle;
             background: transparent;
         }
+        .td-nowrap { white-space: nowrap; }
+        .td-tight { width: 1%; white-space: nowrap; }
+        .td-actions { min-width: 290px; }
+        .cell-ellipsis {
+            display: block;
+            max-width: 260px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .cell-ellipsis-sm {
+            display: block;
+            max-width: 190px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .ua-cell {
+            display: block;
+            max-width: 360px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         .badge-premium { background: rgba(34,197,94,.18); color:#7fffb0; border:1px solid rgba(34,197,94,.42); }
         .badge-basic { background: rgba(148,163,184,.16); color:#c8d5ed; border:1px solid rgba(148,163,184,.28); }
         .btn-outline-premium { border-color: rgba(34,197,94,.55); color:#96f5b8; }
@@ -58,6 +82,10 @@
         .table-stack { display: grid; gap: 12px; }
         @media (max-width: 1200px) {
             .page-wrap { max-width: 100%; }
+            .ua-cell { max-width: 220px; }
+            .td-actions { min-width: 230px; }
+            .cell-ellipsis { max-width: 180px; }
+            .cell-ellipsis-sm { max-width: 140px; }
         }
     </style>
 </head>
@@ -124,33 +152,33 @@
                             <tbody>
                                 {% for user in users %}
                                 <tr>
-                                    <td>{{ user.id }}</td>
-                                    <td>{{ user.name }}</td>
-                                    <td>{{ user.username }}</td>
-                                    <td>{{ user.email }}</td>
-                                    <td>
+                                    <td class="td-tight">{{ user.id }}</td>
+                                    <td><span class="cell-ellipsis">{{ user.name }}</span></td>
+                                    <td><span class="cell-ellipsis-sm">{{ user.username }}</span></td>
+                                    <td><span class="cell-ellipsis">{{ user.email }}</span></td>
+                                    <td class="td-nowrap">
                                         {% if user.is_active %}
                                         <span class="badge text-bg-success">Ativo</span>
                                         {% else %}
                                         <span class="badge text-bg-secondary">Inativo</span>
                                         {% endif %}
                                     </td>
-                                    <td>
+                                    <td class="td-nowrap">
                                         {% if user.is_premium %}
                                         <span class="badge badge-premium">Premium</span>
                                         {% else %}
                                         <span class="badge badge-basic">Basico</span>
                                         {% endif %}
                                     </td>
-                                    <td>
+                                    <td class="td-nowrap">
                                         {% if user.is_admin %}
                                         <span class="badge text-bg-primary">Sim</span>
                                         {% else %}
                                         <span class="badge text-bg-dark">Nao</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else '-' }}</td>
-                                    <td class="d-flex gap-1">
+                                    <td class="td-nowrap">{{ user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else '-' }}</td>
+                                    <td class="d-flex gap-1 td-actions">
                                         <form method="post" action="{{ url_for('admin.toggle_user_active', user_id=user.id) }}">
                                             <button class="btn btn-outline-warning btn-sm" type="submit">
                                                 {{ 'Desativar' if user.is_active else 'Ativar' }}
@@ -199,27 +227,27 @@
                             <tbody>
                                 {% for route in recent_routes %}
                                 <tr>
-                                    <td>#{{ route.id }}</td>
-                                    <td>{{ route.created_at.strftime('%d/%m %H:%M') if route.created_at else '-' }}</td>
+                                    <td class="td-tight">#{{ route.id }}</td>
+                                    <td class="td-nowrap">{{ route.created_at.strftime('%d/%m %H:%M') if route.created_at else '-' }}</td>
                                     <td>
                                         {% if route.username %}
-                                        <div class="fw-semibold">{{ route.username }}</div>
-                                        <small class="text-soft">{{ route.user_name or route.user_email or '-' }}</small>
+                                        <div class="fw-semibold cell-ellipsis-sm">{{ route.username }}</div>
+                                        <small class="text-soft cell-ellipsis">{{ route.user_name or route.user_email or '-' }}</small>
                                         {% else %}
                                         <span class="text-soft">Sem usuario</span>
                                         {% endif %}
                                     </td>
-                                    <td>
+                                    <td class="td-nowrap">
                                         {% if route.is_premium %}
                                         <span class="badge badge-premium">Premium</span>
                                         {% else %}
                                         <span class="badge badge-basic">Basico</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ route.stops }}</td>
-                                    <td>{{ "%.1f"|format((route.total_distance or 0)/1000) }} km</td>
-                                    <td>{{ "%.0f"|format((route.total_duration or 0)/60) }} min</td>
-                                    <td>
+                                    <td class="td-nowrap">{{ route.stops }}</td>
+                                    <td class="td-nowrap">{{ "%.1f"|format((route.total_distance or 0)/1000) }} km</td>
+                                    <td class="td-nowrap">{{ "%.0f"|format((route.total_duration or 0)/60) }} min</td>
+                                    <td class="td-nowrap">
                                         <form method="post" action="{{ url_for('admin.delete_route', route_id=route.id) }}">
                                             <button class="btn btn-outline-danger btn-sm" type="submit">Excluir</button>
                                         </form>
@@ -255,21 +283,21 @@
                             <tbody>
                                 {% for evt in recent_login_events %}
                                 <tr>
-                                    <td>{{ evt.created_at.strftime('%d/%m %H:%M:%S') if evt.created_at else '-' }}</td>
+                                    <td class="td-nowrap">{{ evt.created_at.strftime('%d/%m %H:%M:%S') if evt.created_at else '-' }}</td>
                                     <td>
-                                        <div class="fw-semibold">{{ evt.resolved_username or evt.username or '-' }}</div>
-                                        <small class="text-soft">{{ evt.resolved_name or '-' }}</small>
+                                        <div class="fw-semibold cell-ellipsis-sm">{{ evt.resolved_username or evt.username or '-' }}</div>
+                                        <small class="text-soft cell-ellipsis-sm">{{ evt.resolved_name or '-' }}</small>
                                     </td>
-                                    <td>
+                                    <td class="td-nowrap">
                                         {% if evt.success %}
                                         <span class="badge text-bg-success">OK</span>
                                         {% else %}
                                         <span class="badge text-bg-danger">Erro</span>
                                         {% endif %}
                                     </td>
-                                    <td><span class="text-soft">{{ evt.reason or '-' }}</span></td>
-                                    <td>{{ evt.ip_address or '-' }}</td>
-                                    <td><small class="text-soft">{{ evt.user_agent or '-' }}</small></td>
+                                    <td><span class="text-soft cell-ellipsis-sm">{{ evt.reason or '-' }}</span></td>
+                                    <td class="td-nowrap">{{ evt.ip_address or '-' }}</td>
+                                    <td><small class="text-soft ua-cell" title="{{ evt.user_agent or '-' }}">{{ evt.user_agent or '-' }}</small></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
