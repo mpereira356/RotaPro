@@ -12,12 +12,16 @@
             radial-gradient(circle at 95% 100%, rgba(34,197,94,.11), transparent 34%),
             var(--bg); color:var(--txt); font-family:Poppins,Inter,sans-serif; }
         .navx { background:rgba(11,18,32,.9); border-bottom:1px solid var(--line); backdrop-filter: blur(8px); }
+        .page-wrap { max-width: 1420px; margin: 0 auto; }
         .panel { background:var(--panel-grad); border:1px solid var(--line); border-radius:16px; box-shadow:0 10px 28px rgba(0,0,0,.22); }
+        .section-panel { padding: 14px; }
+        .section-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+        .section-head h5 { margin:0; font-size:1.02rem; }
         .logo { width:34px; height:34px; border-radius:8px; object-fit:cover; border:1px solid rgba(148,163,184,.35); }
         .metric { padding:14px; }
         .metric .label { font-size:.8rem; color:var(--muted); }
         .metric .value { font-size:1.35rem; font-weight:700; }
-        .table-responsive { background: transparent; border-radius: 12px; }
+        .table-responsive { background: rgba(8,14,27,.32); border:1px solid rgba(148,163,184,.14); border-radius: 12px; padding: 2px; }
         .table {
             --bs-table-color: #dbe8ff;
             --bs-table-bg: rgba(0,0,0,0);
@@ -30,6 +34,7 @@
             --bs-table-hover-color: #eef4ff;
             color: #dbe8ff;
             margin-bottom: 0;
+            font-size: .9rem;
         }
         .table thead th {
             color: var(--muted);
@@ -50,6 +55,10 @@
         .btn-outline-premium { border-color: rgba(34,197,94,.55); color:#96f5b8; }
         .btn-outline-premium:hover { background: rgba(34,197,94,.16); color:#c9ffdd; }
         .text-soft { color: var(--muted); }
+        .table-stack { display: grid; gap: 12px; }
+        @media (max-width: 1200px) {
+            .page-wrap { max-width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -71,7 +80,7 @@
         </div>
     </nav>
 
-    <main class="container-fluid py-3 px-3 px-md-4">
+    <main class="container-fluid py-3 px-3 px-md-4 page-wrap">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -92,9 +101,12 @@
 
         <div class="row g-3">
             <div class="col-lg-7">
-                <div class="panel p-3">
-                    <h5 class="mb-3">Usuarios</h5>
-                    <div class="table-responsive">
+                <div class="panel section-panel">
+                    <div class="section-head">
+                        <h5>Usuarios</h5>
+                        <small class="text-soft">Gerencie contas e permissoes</small>
+                    </div>
+                    <div class="table-responsive" style="max-height: 62vh; overflow:auto;">
                         <table class="table table-sm align-middle">
                             <thead>
                                 <tr>
@@ -165,8 +177,11 @@
             </div>
 
             <div class="col-lg-5">
-                <div class="panel p-3">
-                    <h5 class="mb-3">Rotas recentes</h5>
+                <div class="panel section-panel">
+                    <div class="section-head">
+                        <h5>Rotas recentes</h5>
+                        <small class="text-soft">Ultimas 80 rotas</small>
+                    </div>
                     <div class="table-responsive" style="max-height: 60vh; overflow:auto;">
                         <table class="table table-sm align-middle">
                             <thead>
@@ -220,9 +235,12 @@
 
         <div class="row g-3 mt-1">
             <div class="col-12">
-                <div class="panel p-3">
-                    <h5 class="mb-3">Logs de login recentes</h5>
-                    <div class="table-responsive" style="max-height: 48vh; overflow:auto;">
+                <div class="panel section-panel">
+                    <div class="section-head">
+                        <h5>Logs de login recentes</h5>
+                        <small class="text-soft">Tentativas OK/erro, IP e motivo</small>
+                    </div>
+                    <div class="table-responsive" style="max-height: 42vh; overflow:auto;">
                         <table class="table table-sm align-middle">
                             <thead>
                                 <tr>
